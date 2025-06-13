@@ -6,8 +6,8 @@ import os
 
 # === Config paths ===
 fbx_path = os.path.abspath("X_Bot.fbx")
-motion_path = os.path.abspath("output_npy/yoga_3D_pose.npy")
-output_path = os.path.abspath("animated_yoga_output.glb")
+motion_path = os.path.abspath("3D_pose.npy")
+output_path = os.path.abspath("output_glb/motion.glb")
 
 # === Clear scene and import FBX ===
 bpy.ops.wm.read_factory_settings(use_empty=True)
