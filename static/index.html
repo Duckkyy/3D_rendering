@@ -207,6 +207,25 @@
                                     // Reset model to static pose
                                     params.applyMotion = false;
                                     await loadModel('/output_glb/model.glb');
+
+                                    // Remove video plane if it exists
+                                    if (videoPlane) {
+                                        scene.remove(videoPlane);
+                                        videoPlane = null;
+                                    }
+                                    
+                                    // Remove video element if it exists
+                                    if (videoElement) {
+                                        videoElement.pause();
+                                        videoElement.remove();
+                                        videoElement = null;
+                                    }
+
+                                    // Clear video texture
+                                    if (videoTexture) {
+                                        videoTexture.dispose();
+                                        videoTexture = null;
+                                    }
                                     
                                     // Reinitialize GUI without motion folder
                                     await initializeGUI();
@@ -279,6 +298,35 @@
                         .onChange(value => {
                             videoPlane.visible = value;
                         });
+                    
+                    // Video playback controls
+                    videoFolder.add({
+                        togglePlay: function() {
+                            if (videoElement.paused) {
+                                videoElement.play();
+                                this.name = 'Pause';
+                            } else {
+                                videoElement.pause();
+                                this.name = 'Play';
+                            }
+                        }
+                    }, 'togglePlay')
+                    .name('Pause');
+
+                    // Skip backward/forward controls
+                    videoFolder.add({
+                        skipBackward: function() {
+                            videoElement.currentTime = Math.max(0, videoElement.currentTime - 5);
+                        }
+                    }, 'skipBackward')
+                    .name('- 5s');
+
+                    videoFolder.add({
+                        skipForward: function() {
+                            videoElement.currentTime = Math.min(videoElement.duration, videoElement.currentTime + 5);
+                        }
+                    }, 'skipForward')
+                    .name('+ 5s');
                     
                     videoFolder.add(videoPlane.position, 'x', -10, 10).name('X Position');
                     videoFolder.add(videoPlane.position, 'y', 0, 10).name('Y Position');
