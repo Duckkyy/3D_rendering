@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>GLB Viewer with Animation</title>
-  <style>
-    body { margin: 0; }
-    canvas { display: block; }
-  </style>
+    <meta charset="UTF-8" />
+    <title>GLB Viewer with Animation</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
 </head>
 <body>
     <div id="info"></div>
@@ -29,30 +29,29 @@
         let mixer;
         let clock = new THREE.Clock();
         let skeleton;
+        let currentModel = null;
 
-        // Add GUI
-        const gui = new GUI();
-        const params = {
-            showSkeleton: true,
-        };
-
+        // Scene setup
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xf0f0f0);
 
+        // Camera setup
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(0, 1.5, 3);
 
+        // Renderer setup
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
+        // Controls setup
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target.set(0, 1, 0);
         controls.update();
 
-        // Lighting
+        // Lighting setup
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
 
@@ -61,70 +60,105 @@
         dirLight.castShadow = true;
         scene.add(dirLight);
 
-        // Load model
-        const loader = new GLTFLoader();
-        loader.load('output_glb/model.glb', (gltf) => {
-            const model = gltf.scene;
-            scene.add(model);
+        // GUI setup
+        const gui = new GUI();
+        const params = {
+            showSkeleton: true,
+            applyMotion: true
+        };
 
-            // Enable shadows
-            model.traverse((object) => {
-                if (object.isMesh) {
-                    object.castShadow = true;
-                    object.receiveShadow = true;
+        // Model loading function
+        function loadModel(modelPath) {
+            if (currentModel) {
+                scene.remove(currentModel);
+                if (skeleton) {
+                    scene.remove(skeleton);
+                }
+                if (mixer) {
+                    mixer.stopAllAction();
+                }
+            }
+
+            const loader = new GLTFLoader();
+            loader.load(modelPath, (gltf) => {
+                const model = gltf.scene;
+                currentModel = model;
+                scene.add(model);
+
+                // Enable shadows
+                model.traverse((object) => {
+                    if (object.isMesh) {
+                        object.castShadow = true;
+                        object.receiveShadow = true;
+                    }
+                });
+
+                // Auto-center model
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                model.position.sub(center);
+                model.position.y = 0;
+
+                // Add skeleton helper
+                skeleton = new THREE.SkeletonHelper(model);
+                skeleton.visible = params.showSkeleton;
+                scene.add(skeleton);
+
+                // Setup animation
+                mixer = new THREE.AnimationMixer(model);
+                if (gltf.animations && gltf.animations.length) {
+                    console.log('Animations found:', gltf.animations.length);
+                    const clip = gltf.animations[0];
+                    const action = mixer.clipAction(clip);
+                    action.play();
+                } else {
+                    console.warn('No animations found in the model');
+                }
+            });
+        }
+
+        // GUI controls
+        const motionFolder = gui.addFolder('Motion Controls');
+        motionFolder.add(params, 'applyMotion')
+            .name('Apply Motion')
+            .onChange((value) => {
+                const modelPath = value ? 
+                    'output_glb/animated_yoga_output.glb' : 
+                    'output_glb/model.glb';
+                loadModel(modelPath);
+            });
+
+        motionFolder.add(params, 'showSkeleton')
+            .name('Show Skeleton')
+            .onChange((value) => {
+                if (skeleton) {
+                    skeleton.visible = value;
                 }
             });
 
-            // Auto-center model
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            model.position.sub(center);
-            model.position.y = 0;
+        // Initial model load
+        loadModel(params.applyMotion ? 'output_glb/animated_yoga_output.glb' : 'output_glb/model.glb');
 
-            // Add skeleton helper
-            const skeleton = new THREE.SkeletonHelper(model);
-            skeleton.visible = true;
-            scene.add(skeleton);
-
-            // Add GUI control for skeleton
-            gui.add(params, 'showSkeleton')
-                .name('Show Skeleton')
-                .onChange((value) => {
-                    skeleton.visible = value;
-                });
-
-            // Setup animation
-            mixer = new THREE.AnimationMixer(model);
-            if (gltf.animations && gltf.animations.length) {
-                console.log('Animations found:', gltf.animations.length);
-                const clip = gltf.animations[0];
-                const action = mixer.clipAction(clip);
-                action.play();
-            } else {
-                console.warn('No animations found in the model');
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (mixer) {
+                const delta = clock.getDelta();
+                mixer.update(delta);
             }
-        });
-
-    // Animation loop
-    function animate() {
-        requestAnimationFrame(animate);
-        
-        if (mixer) {
-            const delta = clock.getDelta();
-            mixer.update(delta);
+            
+            renderer.render(scene, camera);
         }
         
-        renderer.render(scene, camera);
-    }
-    
-    animate();
+        animate();
 
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
 </html>
