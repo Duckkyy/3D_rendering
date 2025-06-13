@@ -3,50 +3,24 @@
 <head>
     <meta charset="UTF-8" />
     <title>3D Motion Viewer</title>
-    <style>
-        body { 
-            margin: 0; 
-            overflow: hidden;
-        }
-        canvas { 
-            display: block; 
-        }
-        #upload-container {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 100;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 8px;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        .upload-btn {
-            padding: 10px 20px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-        .upload-btn:hover {
-            background: #45a049;
-        }
-        #upload-status {
-            margin-top: 10px;
-            font-size: 14px;
-            min-height: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div id="upload-container">
         <input type="file" id="video-input" accept="video/*" style="display: none;">
         <button class="upload-btn" id="upload-btn">Upload Video for Pose Estimation</button>
         <div id="upload-status"></div>
+    </div>
+
+    <div id="video-container">
+        <video id="result-video" controls>
+            <source src="" type="video/mp4">
+            Your browser does not support the video element.
+        </video>
+        <div class="video-controls">
+            <button class="video-btn" id="toggle-video">Hide Video</button>
+            <button class="video-btn" id="float-video">Float</button>
+        </div>
     </div>
 
     <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
@@ -213,12 +187,26 @@
                 const data = await response.json();
                 if (data.success) {
                     uploadStatus.textContent = 'Processing complete! Updating viewer...';
+            
+                    // Initialize GUI and load motion model
                     await initializeGUI();
-                    
-                    if (params.applyMotion) {
-                        await loadModel('/output_glb/motion.glb');
-                    }
-                    
+                    await loadModel('/output_glb/motion.glb');
+                
+                    // Update video player with the new video
+                    const videoContainer = document.getElementById('video-container');
+                    const resultVideo = document.getElementById('result-video');
+                
+                    // Add timestamp to prevent browser caching
+                    resultVideo.src = `http://127.0.0.1:5000/video/output_3D_pose.mp4?t=${new Date().getTime()}`;
+                    videoContainer.style.display = 'block';
+            
+                    // Auto play the video
+                    resultVideo.load();
+                    resultVideo.play().catch(e => console.log('Auto-play prevented:', e));
+                
+                    // Set motion parameter to true
+                    params.applyMotion = true;
+                
                     uploadStatus.textContent = 'Ready!';
                 } else {
                     uploadStatus.textContent = 'Error: ' + data.error;
@@ -226,8 +214,8 @@
             } catch (error) {
                 uploadStatus.textContent = 'Error: ' + error.message;
                 console.error('Upload error:', error);
-            }
-        });
+        }
+});
 
         // Animation loop
         function animate() {

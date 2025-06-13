@@ -20,6 +20,11 @@ def serve_index():
 def serve_glb(path):
     return send_from_directory('output_glb', path)
 
+# Add after existing routes
+@app.route('/video/<path:filename>')
+def serve_video(filename):
+    return send_from_directory('VideoPose3D', filename)
+
 @app.route('/check-motion-file')
 def check_motion_file():
     motion_file = os.path.join('output_glb', 'motion.glb')
