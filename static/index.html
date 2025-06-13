@@ -12,7 +12,7 @@
         <div id="upload-status"></div>
     </div>
 
-    <div id="video-container">
+    <!-- <div id="video-container">
         <video id="result-video" controls>
             <source src="" type="video/mp4">
             Your browser does not support the video element.
@@ -21,7 +21,7 @@
             <button class="video-btn" id="toggle-video">Hide Video</button>
             <button class="video-btn" id="float-video">Float</button>
         </div>
-    </div>
+    </div> -->
 
     <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
     <script type="importmap">
@@ -45,6 +45,10 @@
         let skeleton;
         let currentModel = null;
         let gui;
+        // Add these new variables
+        let videoPlane;
+        let videoTexture;
+        let videoElement;
 
         // Scene setup
         const scene = new THREE.Scene();
@@ -78,6 +82,42 @@
             showSkeleton: true,
             applyMotion: false
         };
+
+        // Add after loadModel function
+        async function createVideoPlane() {
+            // Remove existing video plane if it exists
+            if (videoPlane) {
+                scene.remove(videoPlane);
+            }
+
+            // Create video element
+            videoElement = document.createElement('video');
+            videoElement.style.display = 'none';
+            videoElement.controls = true;
+            videoElement.loop = true;
+            document.body.appendChild(videoElement);
+
+            // Create video texture
+            videoTexture = new THREE.VideoTexture(videoElement);
+            videoTexture.minFilter = THREE.LinearFilter;
+            videoTexture.magFilter = THREE.LinearFilter;
+
+            // Create plane geometry (16:9 aspect ratio)
+            const planeGeometry = new THREE.PlaneGeometry(6, 3.375); // Larger size
+            const planeMaterial = new THREE.MeshBasicMaterial({
+                map: videoTexture,
+                side: THREE.DoubleSide,
+                transparent: true
+            });
+
+            // Create and position the plane
+            videoPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            videoPlane.position.set(-4, 2, -2); // Position left and slightly back
+            videoPlane.rotation.set(-0.1, 0.3, 0); // Slight rotation for 3D effect
+            scene.add(videoPlane);
+
+            return videoPlane;
+        }
 
         // Model loading function
         async function loadModel(modelPath) {
@@ -170,6 +210,7 @@
 
         uploadBtn.addEventListener('click', () => videoInput.click());
 
+        // Replace the video upload handling section
         videoInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -187,26 +228,38 @@
                 const data = await response.json();
                 if (data.success) {
                     uploadStatus.textContent = 'Processing complete! Updating viewer...';
-            
+                    
                     // Initialize GUI and load motion model
                     await initializeGUI();
                     await loadModel('/output_glb/motion.glb');
-                
-                    // Update video player with the new video
-                    const videoContainer = document.getElementById('video-container');
-                    const resultVideo = document.getElementById('result-video');
-                
-                    // Add timestamp to prevent browser caching
-                    resultVideo.src = `http://127.0.0.1:5000/video/output_3D_pose.mp4?t=${new Date().getTime()}`;
-                    videoContainer.style.display = 'block';
-            
-                    // Auto play the video
-                    resultVideo.load();
-                    resultVideo.play().catch(e => console.log('Auto-play prevented:', e));
-                
+                    
+                    // Create or update video plane
+                    await createVideoPlane();
+                    
+                    // Update video source
+                    const videoUrl = `http://127.0.0.1:5000/video/output_3D_pose.mp4?t=${new Date().getTime()}`;
+                    videoElement.src = videoUrl;
+                    videoElement.load();
+                    videoElement.play().catch(e => console.log('Auto-play prevented:', e));
+                    
+                    // Add video controls to GUI
+                    const videoFolder = gui.addFolder('Video Controls');
+                    videoFolder.add({ visible: true }, 'visible')
+                        .name('Show Video')
+                        .onChange(value => {
+                            videoPlane.visible = value;
+                        });
+                    
+                    videoFolder.add(videoPlane.position, 'x', -10, 10).name('X Position');
+                    videoFolder.add(videoPlane.position, 'y', 0, 10).name('Y Position');
+                    videoFolder.add(videoPlane.position, 'z', -10, 10).name('Z Position');
+                    videoFolder.add(videoPlane.rotation, 'x', -Math.PI, Math.PI).name('X Rotation');
+                    videoFolder.add(videoPlane.rotation, 'y', -Math.PI, Math.PI).name('Y Rotation');
+                    videoFolder.add(videoPlane.rotation, 'z', -Math.PI, Math.PI).name('Z Rotation');
+                    
                     // Set motion parameter to true
                     params.applyMotion = true;
-                
+                    
                     uploadStatus.textContent = 'Ready!';
                 } else {
                     uploadStatus.textContent = 'Error: ' + data.error;
@@ -214,8 +267,8 @@
             } catch (error) {
                 uploadStatus.textContent = 'Error: ' + error.message;
                 console.error('Upload error:', error);
-        }
-});
+            }
+        });
 
         // Animation loop
         function animate() {
