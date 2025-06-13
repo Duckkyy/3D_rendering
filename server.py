@@ -37,6 +37,7 @@ def upload_video():
         run_2D_pose_estimation()
         prepare_2D_pose_data()
         run_3D_pose_estimation(video.filename.split('.')[0])
+        run_motion_application()
         
         return jsonify({
             'success': True,
@@ -91,6 +92,6 @@ def run_motion_application():
     subprocess.run([
         "blender", "--background", "--python", "apply_motion.py"
     ], check=True)
-    
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
