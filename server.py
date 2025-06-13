@@ -84,5 +84,13 @@ def run_3D_pose_estimation(filename):
         "--viz-size", "6"
     ], check=True, cwd=videopose_dir)
 
+def run_motion_application():
+    """
+    Runs Blender in background mode and executes apply_motion.py.
+    """
+    subprocess.run([
+        "blender", "--background", "--python", "apply_motion.py"
+    ], check=True)
+    
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

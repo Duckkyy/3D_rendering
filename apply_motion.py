@@ -6,7 +6,7 @@ import os
 
 # === Config paths ===
 fbx_path = os.path.abspath("X_Bot.fbx")
-motion_path = os.path.abspath("3D_pose.npy")
+motion_path = os.path.abspath("VideoPose3D/3D_pose.npy")
 output_path = os.path.abspath("output_glb/motion.glb")
 
 # === Clear scene and import FBX ===
