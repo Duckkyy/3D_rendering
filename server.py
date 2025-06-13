@@ -48,22 +48,25 @@ def upload_video():
         return jsonify({'error': str(e)}), 500
 
 def run_2D_pose_estimation():
+    videopose_dir = "VideoPose3D"
     subprocess.run([
         "python", "inference/infer_video_d2.py",
         "--cfg", "COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x.yaml",
         "--output-dir", "output_keypoints/",
         "--image-ext", "mp4",
         "input_video/"
-    ], check=True)
+    ], check=True, cwd=videopose_dir)
 
 def prepare_2D_pose_data():
+    videopose_dir = "VideoPose3D"
     subprocess.run([
         "python", "data/prepare_data_2d_custom.py",
         "-i", "output_keypoints/",
         "-o", "video"
-    ], check=True)
+    ], check=True, cwd=videopose_dir)
 
 def run_3D_pose_estimation(filename):
+    videopose_dir = "VideoPose3D"
     subprocess.run([
         "python", "run.py",
         "-d", "custom",
@@ -79,7 +82,7 @@ def run_3D_pose_estimation(filename):
         "--viz-output", "output_3D_pose.mp4",
         "--viz-export", "3D_pose",
         "--viz-size", "6"
-    ], check=True)
+    ], check=True, cwd=videopose_dir)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
