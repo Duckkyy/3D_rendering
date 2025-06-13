@@ -230,6 +230,7 @@
                     uploadStatus.textContent = 'Processing complete! Updating viewer...';
                     
                     // Initialize GUI and load motion model
+                    if (gui) gui.destroy();
                     await initializeGUI();
                     
                     // Create or update video plane
