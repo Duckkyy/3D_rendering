@@ -194,10 +194,40 @@
                                 '/output_glb/model.glb';
                             loadModel(modelPath);
                         });
+                    // Add delete button
+                    motionFolder.add({
+                        deleteMotion: async function() {
+                            try {
+                                const response = await fetch('http://127.0.0.1:5000/delete-motion', {
+                                    method: 'POST'
+                                });
+                                const data = await response.json();
+                                
+                                if (data.success) {
+                                    // Reset model to static pose
+                                    params.applyMotion = false;
+                                    await loadModel('/output_glb/model.glb');
+                                    
+                                    // Reinitialize GUI without motion folder
+                                    await initializeGUI();
+                                    
+                                    uploadStatus.textContent = 'Motion deleted successfully';
+                                } else {
+                                    uploadStatus.textContent = 'Error: ' + (data.error || data.message);
+                                }
+                            } catch (error) {
+                                console.error('Error deleting motion:', error);
+                                uploadStatus.textContent = 'Error deleting motion file';
+                            }
+                        }
+                    }, 'deleteMotion')
+                    .name('Delete Motion');
                 }
 
                 // Load initial model
-                await loadModel('/output_glb/model.glb');
+                if (!currentModel) {
+                    await loadModel('/output_glb/model.glb');
+                }
             } catch (error) {
                 console.error('Error initializing:', error);
             }

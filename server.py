@@ -33,6 +33,26 @@ def check_motion_file():
         'exists': exists
     })
 
+@app.route('/delete-motion', methods=['POST'])
+def delete_motion():
+    try:
+        motion_path = os.path.join('output_glb', 'motion.glb')
+        if os.path.exists(motion_path):
+            os.remove(motion_path)
+            return jsonify({
+                'success': True,
+                'message': 'Motion file deleted successfully'
+            })
+        return jsonify({
+            'success': False,
+            'message': 'Motion file not found'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/upload-video', methods=['POST'])
 def upload_video():
     if 'video' not in request.files:
