@@ -43,29 +43,16 @@
 
 ## Folder structure
    ```
+   3D_rendering
    ├── VideoPose3D
-   │   ├── checkpoint
-   │   ├── common
-   │   ├── data
-   │   ├── inference
    │   ├── main.py
-   │   └── run.py
    ├── X_Bot.fbx
    ├── apply_motion.py
-   ├── motion.glb
    ├── output_glb
    │   └── model.glb
    ├── server.py
    ├── static
-   │   ├── build
    │   ├── css
    │   ├── index.html
-   │   ├── jsm
-   │   ├── main.css
-   │   ├── models
-   │   ├── node_modules
-   │   ├── output_npy
-   │   ├── package-lock.json
-   │   └── package.json
-   └── structure.txt
+   └── requirements.txt
    ```
