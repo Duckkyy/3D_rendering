@@ -56,3 +56,12 @@
    │   ├── index.html
    └── requirements.txt
    ```
+
+   Note for my repo
+
+   ```
+   First of all static folder (with index.html and css inside) is where I render my website by using Three.js and Flask
+   output_glb is a folder to save model.glb which is the file I used for rendering standing model. After running 3D pose estimation, it will create motion.glb file inside and I can render the model with motion.
+   VideoPose3D is a module in python to extract motion from an input video, then create .npy file contains motion and an output video
+   apply_motion.py helps me combine the motion to model (which is not accuracy). This file uses X_Bot.fbx (model) and .npy file created by VideoPose3D (motion) for applying motion
+   ```
