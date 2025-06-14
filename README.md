@@ -45,7 +45,6 @@
    ```
    3D_rendering
    ├── VideoPose3D
-   │   ├── main.py
    ├── X_Bot.fbx
    ├── apply_motion.py
    ├── output_glb
